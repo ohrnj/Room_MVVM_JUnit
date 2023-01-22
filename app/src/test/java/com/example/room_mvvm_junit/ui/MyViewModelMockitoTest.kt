@@ -24,7 +24,7 @@ import org.mockito.kotlin.whenever
 import java.util.*
 
 @RunWith(MockitoJUnitRunner::class)
-class MyViewModelTest {
+class MyViewModelMockitoTest {
 
     @get:Rule
     var instantTaskExecutorRule = InstantTaskExecutorRule()
@@ -33,58 +33,29 @@ class MyViewModelTest {
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
-
     @Mock
-    private lateinit var imageObserver: Observer<List<ImageDataModel>>
-    @Mock
-    private lateinit var mockRepository: DefaultRepository
-//    @Mock
-//    lateinit var getSavedImagesObserver : Observer<kotlin.collections.List<ImageDataModel>>
-
     private lateinit var viewModel: MyViewModel
-    private lateinit var viewModelWithMockito: MyViewModel
 
     private lateinit var img1: ImageDataModel
     private lateinit var img2: ImageDataModel
 
     @Before
     fun Setup() {
-//        mockRepository = mock(DefaultRepository::class.java)
-        viewModel = MyViewModel(FakeTestRepository())
-        viewModelWithMockito = MyViewModel(mockRepository)
-//        viewModelWithMockito.getSavedImages().observeForever(getSavedImagesObserver)
-        viewModelWithMockito = mock(MyViewModel::class.java)
+        viewModel = mock(MyViewModel::class.java)
 
         img1 = ImageDataModel(id=1, "http://www.example.com/img1.png", "image1")
         img2 = ImageDataModel(id=2, "http://www.example.com/img2.png", "image2")
     }
 
     @Test
-    fun `get all data mockitoTest`() = runBlocking{
-
-//        whenever(mockRepository.allImagesFromDao).thenAnswer{ flow { emit(listOf(img1, img2))}}
+    fun `get all data mockitoTest`() {
 
         val dataResponse = MutableLiveData<List<ImageDataModel>>()
         dataResponse.value = listOf(img1, img2)
 
-//        `when`(mockRepository.allImagesFromDao).then { dataResponse }
-        `when`(viewModelWithMockito.getSavedImages()).then { dataResponse }
-//        whenever(mockRepository.allImagesFromDao).thenAnswer{ liveData { emit(listOf(img1, img2))}}
-//        whenever(viewModelWithMockito.getSavedImages()).thenAnswer{ liveData { emit(listOf(img1, img2)) }}
+        `when`(viewModel.getSavedImages()).then { dataResponse }
 
-//        mockRepository.allImagesFromDao.collect{item ->
-//            assertEquals(2, item.size)
-//            assertEquals("image1", item[0].title)
-//            println("title: ${item[0].title}") }
-
-//        val resultList = viewModelWithMockito.getSavedImages()
-//        resultList.observeForever{ item ->
-//            assertEquals(2, item.size)
-//            assertEquals("image1", item[0].title)
-//            println("title: ${item[0].title}")
-//        }
-
-        val resultList = viewModelWithMockito.getSavedImages().value
+        val resultList = viewModel.getSavedImages().value
             assertEquals(2, resultList!!.size)
             assertEquals("image1", resultList[0].title)
             println("title: ${resultList[0].title}")
