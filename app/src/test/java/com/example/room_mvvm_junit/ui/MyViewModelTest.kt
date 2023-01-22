@@ -2,25 +2,19 @@ package com.example.room_mvvm_junit.ui
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import com.example.room_mvvm_junit.MainCoroutineRule
 import com.example.room_mvvm_junit.db.ImageDataModel
-import com.example.room_mvvm_junit.repositories.DefaultRepository
 import com.example.room_mvvm_junit.repositories.FakeTestRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.jupiter.*
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import org.mockito.Mockito.*
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.whenever
 import java.util.*
 
 @RunWith(MockitoJUnitRunner::class)
@@ -33,65 +27,50 @@ class MyViewModelTest {
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
-
     @Mock
-    private lateinit var imageObserver: Observer<List<ImageDataModel>>
-    @Mock
-    private lateinit var mockRepository: DefaultRepository
-//    @Mock
-//    lateinit var getSavedImagesObserver : Observer<kotlin.collections.List<ImageDataModel>>
+    private lateinit var viewModelMockito: MyViewModel
 
     private lateinit var viewModel: MyViewModel
-    private lateinit var viewModelWithMockito: MyViewModel
-
     private lateinit var img1: ImageDataModel
     private lateinit var img2: ImageDataModel
 
     @Before
     fun Setup() {
-//        mockRepository = mock(DefaultRepository::class.java)
         viewModel = MyViewModel(FakeTestRepository())
-        viewModelWithMockito = MyViewModel(mockRepository)
-//        viewModelWithMockito.getSavedImages().observeForever(getSavedImagesObserver)
-        viewModelWithMockito = mock(MyViewModel::class.java)
+        viewModelMockito = mock(MyViewModel::class.java)
 
-        img1 = ImageDataModel(id=1, "http://www.example.com/img1.png", "image1")
-        img2 = ImageDataModel(id=2, "http://www.example.com/img2.png", "image2")
+        img1 = ImageDataModel(id = 1, "http://www.example.com/img1.png", "image1")
+        img2 = ImageDataModel(id = 2, "http://www.example.com/img2.png", "image2")
     }
 
     @Test
-    fun `get all data mockitoTest`() = runBlocking{
-
-//        whenever(mockRepository.allImagesFromDao).thenAnswer{ flow { emit(listOf(img1, img2))}}
+    fun `get all data, verify interaction, return size of list`() {
 
         val dataResponse = MutableLiveData<List<ImageDataModel>>()
         dataResponse.value = listOf(img1, img2)
+        `when`(viewModelMockito.getSavedImages()).then { dataResponse }
 
-//        `when`(mockRepository.allImagesFromDao).then { dataResponse }
-        `when`(viewModelWithMockito.getSavedImages()).then { dataResponse }
-//        whenever(mockRepository.allImagesFromDao).thenAnswer{ liveData { emit(listOf(img1, img2))}}
-//        whenever(viewModelWithMockito.getSavedImages()).thenAnswer{ liveData { emit(listOf(img1, img2)) }}
+        viewModelMockito.getSavedImages()
+        verify(viewModelMockito).getSavedImages()
 
-//        mockRepository.allImagesFromDao.collect{item ->
-//            assertEquals(2, item.size)
-//            assertEquals("image1", item[0].title)
-//            println("title: ${item[0].title}") }
+        val resultList = viewModelMockito.getSavedImages().value
+        assertEquals(2, resultList!!.size)
+    }
 
-//        val resultList = viewModelWithMockito.getSavedImages()
-//        resultList.observeForever{ item ->
-//            assertEquals(2, item.size)
-//            assertEquals("image1", item[0].title)
-//            println("title: ${item[0].title}")
-//        }
 
-        val resultList = viewModelWithMockito.getSavedImages().value
-            assertEquals(2, resultList!!.size)
-            assertEquals("image1", resultList[0].title)
-            println("title: ${resultList[0].title}")
+    @Test
+    fun `get all data, image titles are equals`() {
+
+        val dataResponse = MutableLiveData<List<ImageDataModel>>()
+        dataResponse.value = listOf(img1, img2)
+        `when`(viewModelMockito.getSavedImages()).then { dataResponse }
+
+        val resultList = viewModelMockito.getSavedImages().value
+        assertEquals("image1", resultList!![0].title)
     }
 
     @Test
-    fun `empty value in imageURL field 2, return false`() {
+    fun `verify user input, empty value in imageURL field 2, return false`() {
         val result = viewModel.validateInput(
             "",
             "some image URL"
@@ -100,7 +79,7 @@ class MyViewModelTest {
     }
 
     @Test
-    fun `empty value in title field, return false`() {
+    fun `verify user input, empty value in title field, return false`() {
         val result = viewModel.validateInput(
             "http://www.example.com/image2.jpg",
             ""
@@ -148,12 +127,5 @@ class MyViewModelTest {
         assertThat(viewModel.stmessage.value).isNotEqualTo("Error occured")
     }
 
-
 }
 
-
-
-
-//private fun <T> OngoingStubbing<T>.thenReturn(emptyList: List<T>): OngoingStubbing<T> {
-//return thenReturn(emptyList())
-//}

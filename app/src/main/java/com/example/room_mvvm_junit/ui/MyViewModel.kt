@@ -17,7 +17,6 @@ import javax.inject.Inject
 @HiltViewModel
 class MyViewModel @Inject constructor(private val repository: PrimalRepository) : ViewModel() {
 
-//    var getSavedImages = MutableLiveData<List<ImageDataModel>>()
     var inputName = MutableLiveData<String>()
     var imageURL = MutableLiveData<String>()
     var saveButtonText = MutableLiveData<String>()
@@ -34,22 +33,8 @@ class MyViewModel @Inject constructor(private val repository: PrimalRepository) 
         deleteButtonText.value = "Delete All"
         inputName.value = ""
         imageURL.value = ""
-//        getSavedImages.value = getSavedImages().value
     }
 
-
-/*    fun getSavedImages() = liveData {
-        try {
-            state.value = State.LOADING
-            repository.allImagesFromDao.collect { emit(it)
-
-                state.value = State.SUCCESS(it)
-            }
-        }catch (e:Exception){
-            state.value = State.FAILURE(e.localizedMessage!!)
-            statusMessage.value = "Error occured"
-        }
-    }*/
 
     fun getSavedImages() = liveData {
         try {

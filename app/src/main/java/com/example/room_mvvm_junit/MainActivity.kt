@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         val itemList = viewModel.getSavedImages()
         val rv = binding.RVActivitymain
         val observer = Observer<List<ImageDataModel>> { list ->
-            Log.d("RVLV", "Observer list: $list")
+
             rv.adapter = RVadapter(list) { selectedItem: ImageDataModel ->
                 viewModel.onSelectedItemClick(selectedItem)
             }
@@ -65,12 +65,12 @@ class MainActivity : AppCompatActivity() {
         viewModel.stmessage.observe(this, Observer {
             it.let {
                 Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                if (it == "loadImage") loadimage() //clickOnImage function loadImage in ViewModel
+                if (it == "loadImage") loadImage() //clickOnImage function loadImage in ViewModel
             }
         })
     } //End of OnCreate
 
-    private fun loadimage() {
+    private fun loadImage() {
         val intent = Intent(Intent.ACTION_PICK)
         intent.type = "image/*"
         resultLauncher.launch(intent)
