@@ -8,7 +8,7 @@ import com.example.room_mvvm_junit.R
 import com.example.room_mvvm_junit.db.ImageDao
 import com.example.room_mvvm_junit.db.ImageDataBase
 import com.example.room_mvvm_junit.repositories.DefaultRepository
-import com.example.room_mvvm_junit.repositories.PrimalRepository
+import com.example.room_mvvm_junit.repositories.BaseRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +31,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDefaultRepository(dao: ImageDao) = DefaultRepository(dao) as PrimalRepository
+    fun provideDefaultRepository(dao: ImageDao) = DefaultRepository(dao) as BaseRepository
 
     @Provides
     @Singleton

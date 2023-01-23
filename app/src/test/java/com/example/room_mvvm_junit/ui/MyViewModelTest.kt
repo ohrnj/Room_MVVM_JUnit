@@ -1,12 +1,19 @@
 package com.example.room_mvvm_junit.ui
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.example.room_mvvm_junit.MainCoroutineRule
 import com.example.room_mvvm_junit.db.ImageDataModel
+import com.example.room_mvvm_junit.repositories.BaseRepository
+import com.example.room_mvvm_junit.repositories.DefaultRepository
 import com.example.room_mvvm_junit.repositories.FakeTestRepository
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -15,7 +22,10 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.junit.MockitoJUnitRunner
-import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+
 
 @RunWith(MockitoJUnitRunner::class)
 class MyViewModelTest {
@@ -27,50 +37,50 @@ class MyViewModelTest {
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
-    @Mock
-    private lateinit var viewModelMockito: MyViewModel
-
+    private lateinit var fakeRepository: FakeTestRepository
     private lateinit var viewModel: MyViewModel
     private lateinit var img1: ImageDataModel
     private lateinit var img2: ImageDataModel
 
     @Before
     fun Setup() {
-        viewModel = MyViewModel(FakeTestRepository())
-        viewModelMockito = mock(MyViewModel::class.java)
+        fakeRepository = FakeTestRepository()
+        viewModel = MyViewModel(fakeRepository)
 
         img1 = ImageDataModel(id = 1, "http://www.example.com/img1.png", "image1")
         img2 = ImageDataModel(id = 2, "http://www.example.com/img2.png", "image2")
     }
 
     @Test
-    fun `get all data, verify interaction, return size of list`() {
+    fun `input data, get list from livedata, return success if equal`() {
 
-        val dataResponse = MutableLiveData<List<ImageDataModel>>()
-        dataResponse.value = listOf(img1, img2)
-        `when`(viewModelMockito.getSavedImages()).then { dataResponse }
+        viewModel.insert(ImageDataModel(id = 1, "http://www.example.com/img1.png", "image1"))
 
-        viewModelMockito.getSavedImages()
-        verify(viewModelMockito).getSavedImages()
-
-        val resultList = viewModelMockito.getSavedImages().value
-        assertEquals(2, resultList!!.size)
+        assertEquals(viewModel.getSavedImages().getOrAwaitValue()[0].title, "image1")
+        assertEquals(viewModel.getSavedImages().getOrAwaitValue()[0], img1)
     }
 
 
     @Test
-    fun `get all data, image titles are equals`() {
+    fun `input data, get all data, return success`(){
 
-        val dataResponse = MutableLiveData<List<ImageDataModel>>()
-        dataResponse.value = listOf(img1, img2)
-        `when`(viewModelMockito.getSavedImages()).then { dataResponse }
+        viewModel.insert(img1)
 
-        val resultList = viewModelMockito.getSavedImages().value
-        assertEquals("image1", resultList!![0].title)
+        val latch = CountDownLatch(1)
+        val observer = Observer<List<ImageDataModel>> {
+                assertEquals(img1, it[0])
+                latch.countDown()
+            }
+        viewModel.getSavedImages().observeForever(observer)
+
+        if (!latch.await(2, TimeUnit.SECONDS)) {
+            throw TimeoutException("LiveData value was never set.")
+        }
     }
 
+
     @Test
-    fun `verify user input, empty value in imageURL field 2, return false`() {
+    fun `verify user input, empty value in imageURL input field, return false`() {
         val result = viewModel.validateInput(
             "",
             "some image URL"
@@ -79,7 +89,7 @@ class MyViewModelTest {
     }
 
     @Test
-    fun `verify user input, empty value in title field, return false`() {
+    fun `verify user input, empty value in title input field, return false`() {
         val result = viewModel.validateInput(
             "http://www.example.com/image2.jpg",
             ""
@@ -88,7 +98,7 @@ class MyViewModelTest {
     }
 
     @Test
-    fun `valid input, return true`() {
+    fun `verify input form, valid input, return true`() {
         val result = viewModel.validateInput(
             "http://www.example.com/image2.jpg",
             "Sample image"
@@ -126,6 +136,38 @@ class MyViewModelTest {
         viewModel.deleteAll()
         assertThat(viewModel.stmessage.value).isNotEqualTo("Error occured")
     }
+
+
+    //This function observes a LiveData until it receives a new value (via onChanged) and then
+    // it removes the observer. If the LiveData already has a value, it returns it immediately.
+    // Additionally, if the value is never set, it will throw an exception after 2 seconds.
+    // This prevents tests that never finish when something goes wrong.
+
+    /* Copyright 2019 Google LLC.
+   SPDX-License-Identifier: Apache-2.0 */
+    fun <T> LiveData<T>.getOrAwaitValue(
+        time: Long = 2,
+        timeUnit: TimeUnit = TimeUnit.SECONDS
+    ): T {
+        var data: T? = null
+        val latch = CountDownLatch(1)
+        val observer = object : Observer<T> {
+            override fun onChanged(o: T?) {
+                data = o
+                latch.countDown()
+                this@getOrAwaitValue.removeObserver(this)
+            }
+        }
+        this.observeForever(observer)
+
+        // Don't wait indefinitely if the LiveData is not set.
+        if (!latch.await(time, timeUnit)) {
+            throw TimeoutException("LiveData value was never set.")
+        }
+        @Suppress("UNCHECKED_CAST")
+        return data as T
+    }
+
 
 }
 

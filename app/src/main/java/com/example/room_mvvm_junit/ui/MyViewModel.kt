@@ -1,21 +1,19 @@
 package com.example.room_mvvm_junit.ui
 
-import androidx.lifecycle.LiveData
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.example.room_mvvm_junit.db.ImageDataModel
-import com.example.room_mvvm_junit.repositories.PrimalRepository
+import com.example.room_mvvm_junit.repositories.BaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MyViewModel @Inject constructor(private val repository: PrimalRepository) : ViewModel() {
+class MyViewModel @Inject constructor(private val repository: BaseRepository) : ViewModel() {
 
     var inputName = MutableLiveData<String>()
     var imageURL = MutableLiveData<String>()
@@ -45,7 +43,8 @@ class MyViewModel @Inject constructor(private val repository: PrimalRepository) 
             }
         }catch (e:Exception){
 //            state.value = State.FAILURE(e.localizedMessage!!)
-            statusMessage.value = "Error occured"
+            statusMessage.value = "Error occurred"
+            Log.e("MSC", "getSavedImages() Error occurred")
         }
     }
 
@@ -88,7 +87,10 @@ class MyViewModel @Inject constructor(private val repository: PrimalRepository) 
         }
         val result = repository.insert(imageDataModel)
         if (result > -1) statusMessage.value = "Image successfully inserted"
-        else statusMessage.value = "Error occured"
+        else {
+            statusMessage.value = "Error occurred"
+            Log.e("MSC", "insert() Error occurred")
+        }
     }
 
     fun update(imageDataModel: ImageDataModel) = viewModelScope.launch {
