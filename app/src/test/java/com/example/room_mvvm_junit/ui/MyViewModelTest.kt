@@ -2,24 +2,17 @@ package com.example.room_mvvm_junit.ui
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.example.room_mvvm_junit.MainCoroutineRule
 import com.example.room_mvvm_junit.db.ImageDataModel
-import com.example.room_mvvm_junit.repositories.BaseRepository
-import com.example.room_mvvm_junit.repositories.DefaultRepository
 import com.example.room_mvvm_junit.repositories.FakeTestRepository
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.junit.MockitoJUnitRunner
 import java.util.concurrent.CountDownLatch
@@ -52,7 +45,7 @@ class MyViewModelTest {
     }
 
     @Test
-    fun `input data, get list from livedata, return success if equal`() {
+    fun `insert data, get list from livedata, return success if equal`() {
 
         viewModel.insert(ImageDataModel(id = 1, "http://www.example.com/img1.png", "image1"))
 
@@ -62,7 +55,7 @@ class MyViewModelTest {
 
 
     @Test
-    fun `input data, get all data, return success`(){
+    fun `insert data, check if data are inserted and return success`(){
 
         viewModel.insert(img1)
 
@@ -82,8 +75,8 @@ class MyViewModelTest {
     @Test
     fun `verify user input, empty value in imageURL input field, return false`() {
         val result = viewModel.validateInput(
-            "",
-            "some image URL"
+            "image1",
+            ""
         )
         assertThat(result).isFalse()
     }
@@ -91,8 +84,8 @@ class MyViewModelTest {
     @Test
     fun `verify user input, empty value in title input field, return false`() {
         val result = viewModel.validateInput(
-            "http://www.example.com/image2.jpg",
-            ""
+            "",
+            "http://www.example.com/image2.jpg"
         )
         assertThat(result).isFalse()
     }
@@ -101,7 +94,7 @@ class MyViewModelTest {
     fun `verify input form, valid input, return true`() {
         val result = viewModel.validateInput(
             "http://www.example.com/image2.jpg",
-            "Sample image"
+            "image2"
         )
         assertThat(result).isTrue()
     }
@@ -109,21 +102,21 @@ class MyViewModelTest {
 
     @Test
     fun `insert image with empty URL in db, return error`() {
-        viewModel.insert(ImageDataModel(id = 1, "", "Some image title"))
+        viewModel.insert(ImageDataModel(id = 1, "", "image1"))
         val result = viewModel.stmessage.value
         assertThat(result).isEqualTo("The fields must not be empty")
     }
 
     @Test
     fun `insert data with valid input, return true`() {
-        viewModel.insert(ImageDataModel(id = 1, "http://www.example.com/image.jpg", "Sample image"))
+        viewModel.insert(ImageDataModel(id = 1, "http://www.example.com/image1.jpg", "image1"))
         val result = viewModel.stmessage.value
         assertThat(result).isEqualTo("Image successfully inserted")
     }
 
     @Test
     fun `delete item, return true`() {
-        val item = ImageDataModel(id = 1, "www.example.com/image2.jpg", "Sample image")
+        val item = ImageDataModel(id = 1, "www.example.com/image2.jpg", "image2")
         viewModel.insert(item)
         viewModel.deleteItem(item)
         assertThat(viewModel.stmessage.value).isEqualTo("1 Row deleted successfully")
@@ -131,7 +124,7 @@ class MyViewModelTest {
 
     @Test
     fun `delete all items, return true`() {
-        val item = ImageDataModel(id = 1, "www.example.com/image2.jpg", "Sample image")
+        val item = ImageDataModel(id = 1, "www.example.com/image2.jpg", "image2")
         viewModel.insert(item)
         viewModel.deleteAll()
         assertThat(viewModel.stmessage.value).isNotEqualTo("Error occured")
